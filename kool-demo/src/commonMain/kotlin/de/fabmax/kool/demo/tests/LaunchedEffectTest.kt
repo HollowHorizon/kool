@@ -127,7 +127,7 @@ class LaunchedEffectTest : DemoScene("Animation API Test") {
                     .size(animSize.dp, animSize.dp)
                     .layout(ColumnLayout)
                     .background(RoundRectBackground(animColor, Dp(animRadius)))
-                    .border(RoundRectBorder(colors.onBackground, Dp(animRadius), 2.dp))
+                    .border(RoundRectShadow(Color.BLACK.withAlpha(0.25f), Dp(animRadius), 15.dp))
                     .onClick { isExpanded = !isExpanded }
                     .onEnter { PointerInput.cursorShape = CursorShape.HAND }
                     .onExit { PointerInput.cursorShape = CursorShape.DEFAULT }
@@ -164,6 +164,7 @@ class LaunchedEffectTest : DemoScene("Animation API Test") {
                 .size(trackWidth.dp, trackHeight.dp)
                 .alignX(AlignmentX.Center)
                 .background(RoundRectBackground(colors.onBackground.withAlpha(0.2f), 15f.dp))
+                .border(RoundRectShadow(Color.BLACK.withAlpha(0.25f), 15f.dp, 8f.dp))
                 .onClick { isToggled = !isToggled }
                 .onEnter { PointerInput.cursorShape = CursorShape.HAND }
                 .onExit { PointerInput.cursorShape = CursorShape.DEFAULT }

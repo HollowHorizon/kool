@@ -1,5 +1,6 @@
 package de.fabmax.kool.modules.ui2
 
+import de.fabmax.kool.math.Vec4f
 import de.fabmax.kool.util.Color
 import kotlin.math.max
 import kotlin.math.min
@@ -112,6 +113,79 @@ class CircularBorder(val borderColor: Color, val borderWidth: Dp, val inset: Dp 
             val y = heightPx * 0.5f
             val r = min(x, y) - round(inset.px)
             node.getUiPrimitives().localCircleBorder(x, y, r, bw, borderColor)
+        }
+    }
+}
+
+private fun Vec4f.inflate(amount: Float): Vec4f {
+    return Vec4f(x - amount, y - amount, z + amount, w + amount)
+}
+
+open class Shadow(val shadowColor: Color, val blurRadius: Dp, val spread: Dp = Dp.ZERO) : UiRenderer<UiNode> {
+    override fun renderUi(node: UiNode) {
+        node.apply {
+            val blur = blurRadius.px
+            val sprd = spread.px
+
+            val x = leftPx - sprd
+            val y = topPx - sprd
+            val w = widthPx + sprd * 2
+            val h = heightPx + sprd * 2
+
+            // TODO: Join this with clip of some parents? (Like ScrollPane)
+            val shadowClip = clipBoundsPx.inflate(blur)
+
+            node.getUiPrimitives(UiSurface.LAYER_BACKGROUND)
+                .rectShadow(x, y, w, h, blur, shadowClip, shadowColor, inset = false)
+        }
+    }
+}
+
+class RoundRectShadow(
+    shadowColor: Color,
+    val cornerRadius: Dp,
+    blurRadius: Dp,
+    spread: Dp = Dp.ZERO
+) : Shadow(shadowColor, blurRadius, spread) {
+
+    override fun renderUi(node: UiNode) {
+        node.apply {
+            val blur = blurRadius.px
+            val sprd = spread.px
+            val cr = cornerRadius.px
+
+            val x = leftPx - sprd
+            val y = topPx - sprd
+            val w = widthPx + sprd * 2
+            val h = heightPx + sprd * 2
+
+            val effCorner = cr + sprd
+            val shadowClip = clipBoundsPx.inflate(blur)
+
+            node.getUiPrimitives(UiSurface.LAYER_BACKGROUND)
+                .roundRectShadow(x, y, w, h, effCorner, blur, shadowClip, shadowColor, inset = false)
+        }
+    }
+}
+
+class InnerShadow(
+    val shadowColor: Color,
+    val blurRadius: Dp,
+    val cornerRadius: Dp = Dp.ZERO
+) : UiRenderer<UiNode> {
+
+    override fun renderUi(node: UiNode) {
+        node.apply {
+            val blur = blurRadius.px
+            val cr = cornerRadius.px
+
+            if (cr > 0f) {
+                node.getUiPrimitives()
+                    .roundRectShadow(leftPx, topPx, widthPx, heightPx, cr, blur, clipBoundsPx, shadowColor, inset = true)
+            } else {
+                node.getUiPrimitives()
+                    .rectShadow(leftPx, topPx, widthPx, heightPx, blur, clipBoundsPx, shadowColor, inset = true)
+            }
         }
     }
 }

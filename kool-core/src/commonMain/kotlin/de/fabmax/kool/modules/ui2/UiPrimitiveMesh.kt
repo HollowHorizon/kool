@@ -82,6 +82,38 @@ class UiPrimitiveMesh(name: String) :
         )
     }
 
+    fun rectShadow(
+        x: Float, y: Float, width: Float, height: Float,
+        blurRadius: Float, clip: Vec4f,
+        color: Color, inset: Boolean = false
+    ) {
+        val shadowColor = color
+        val transparent = color.withAlpha(0f)
+
+        if (!inset) {
+            addPrimitive(
+                x, y,
+                width, height, 0f, 0f,
+                width + blurRadius * 2f, height + blurRadius * 2f, blurRadius, blurRadius,
+                clip, shadowColor, transparent, 0f, 0f, 0f, 0f
+            )
+
+            addPrimitive(
+                x - blurRadius, y - blurRadius,
+                width + blurRadius * 2f, height + blurRadius * 2f, blurRadius, blurRadius,
+                width, height, 0f, 0f,
+                clip, shadowColor, transparent, 0f, 0f, 0f, 0f
+            )
+        } else {
+            addPrimitive(
+                x, y,
+                width, height, 0f, 0f,
+                width - blurRadius * 2f, height - blurRadius * 2f, 0f, 0f,
+                clip, transparent, shadowColor, 0f, 0f, 0f, 0f
+            )
+        }
+    }
+
     fun roundRect(
         x: Float, y: Float, width: Float, height: Float, radius: Float, clip: Vec4f,
         colorA: Color, colorB: Color = colorA,
@@ -92,6 +124,32 @@ class UiPrimitiveMesh(name: String) :
             0f, 0f, 0f, 0f, clip,
             colorA, colorB, gradientCx, gradientCy, gradientRx, gradientRy
         )
+    }
+
+    fun roundRectShadow(
+        x: Float, y: Float, width: Float, height: Float, cornerRadius: Float,
+        blurRadius: Float, clip: Vec4f,
+        color: Color, inset: Boolean = false
+    ) {
+        val shadowColor = color
+        val transparent = color.withAlpha(0f)
+
+        if (!inset) {
+            addPrimitive(
+                x - blurRadius, y - blurRadius,
+                width + blurRadius * 2f, height + blurRadius * 2f, cornerRadius + blurRadius, cornerRadius + blurRadius,
+                width, height, cornerRadius, cornerRadius,
+                clip, shadowColor, transparent, 0f, 0f, 0f, 0f
+            )
+        } else {
+            val innerR = max(0f, cornerRadius - blurRadius)
+            addPrimitive(
+                x, y,
+                width, height, cornerRadius, cornerRadius,
+                width - blurRadius * 2f, height - blurRadius * 2f, innerR, innerR,
+                clip, transparent, shadowColor, 0f, 0f, 0f, 0f
+            )
+        }
     }
 
     fun circle(
@@ -231,6 +289,7 @@ class UiPrimitiveMesh(name: String) :
                 val gradientCfg = interStageFloat4(interpolation = KslInterStageInterpolation.Flat)
                 val colorA = interStageFloat4()
                 val colorB = interStageFloat4()
+                val edgeWeight = interStageFloat1()
 
                 vertexStage {
                     main {
@@ -242,6 +301,9 @@ class UiPrimitiveMesh(name: String) :
                         val outerPosWeights = float4Var(vertexAttrib(UiPrimVertexLayout.outerWeights))
                         val innerPosWeights = float4Var(vertexAttrib(UiPrimVertexLayout.innerWeights))
                         val pos = float3Var(Vec3f.ZERO.const)
+
+                        val isInner = float1Var(min(1f.const, length(innerPosWeights.xy) + length(innerPosWeights.zw)))
+                        edgeWeight.input set isInner
 
                         pos.xy set center + outerPosWeights.xy * outerDimens.xy + outerPosWeights.zw * outerDimens.zw
                         pos.xy += innerPosWeights.xy * innerDimens.xy + innerPosWeights.zw * innerDimens.zw
@@ -278,7 +340,10 @@ class UiPrimitiveMesh(name: String) :
                                 colorOutput(gradColor.rgb * gradColor.a, gradColor.a)
 
                             }.`else` {
-                                colorOutput(colorA.output.rgb * colorA.output.a, colorA.output.a)
+                                val mixFactor = float1Var(smoothStep(0f.const, 1f.const, edgeWeight.output))
+                                val mixedColor = float4Var(mix(colorB.output, colorA.output, mixFactor))
+
+                                colorOutput(mixedColor.rgb * mixedColor.a, mixedColor.a)
                             }
                         }
                     }
