@@ -50,6 +50,12 @@ class LauncherWindow(uiDemo: UiDemo) : DemoWindow("Window Launcher", uiDemo, fal
                 launchOrBringToTop(allowMultiInstances, DragAndDropWindow.B::class) { DragAndDropWindow.B(uiDemo) }
             }
         }
+        Button("Flow Layout".l) {
+            launcherButtonStyle("Flow layout with wrapping rows and columns".l)
+            modifier.onClick {
+                launchOrBringToTop(allowMultiInstances, FlowLayoutWindow::class) { FlowLayoutWindow(uiDemo) }
+            }
+        }
         Row(Grow.Std) {
             modifier
                 .margin(sizes.largeGap)
