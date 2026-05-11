@@ -1,5 +1,6 @@
 package de.fabmax.kool
 
+import de.fabmax.kool.math.Vec2f
 import de.fabmax.kool.math.Vec2i
 import de.fabmax.kool.util.BufferedList
 import de.fabmax.kool.util.WindowTitleHoverHandler
@@ -14,7 +15,7 @@ interface KoolWindow {
     /**
      * Window position in scaled screen space (i.e., considering [parentScreenScale]).
      */
-    var positionInScreen: Vec2i
+    var positionOnScreen: Vec2i
 
     /**
      * Window size in scaled screen space (i.e., considering [parentScreenScale]). For example, a full-screen
@@ -96,6 +97,7 @@ data class WindowFlags(
     val isMaximized: Boolean = false,
     val isMinimized: Boolean = false,
     val isVisible: Boolean = false,
+    val isOccluded: Boolean = false,
     val isFocused: Boolean = false,
     val isHiddenTitleBar: Boolean = false,
 )
@@ -136,7 +138,11 @@ interface DragAndDropListener {
      * containing the drag and drop state (e.g., cursor position) before files are dropped, but this is currently not
      * possible due to limited drag and drop support of GLFW on JVM.
      */
-    fun onFileDrop(droppedFiles: List<LoadableFile>) { }
+    fun onFileDrop(droppedFiles: List<LoadableFile>, position: Vec2f) { }
+
+    fun onTextDrop(text: String, position: Vec2f) { }
+
+    fun onDropCursorPos(position: Vec2f) { }
 }
 
 fun KoolWindow.onResize(listener: WindowResizeListener) {
